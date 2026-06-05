@@ -69,7 +69,8 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 async function endSessionSuccessfully() {
   const data = await chrome.storage.local.get(["sessionDurationMinutes", "pendingXP"]);
-  const mins = data.sessionDurationMinutes || 0;
+  // const mins = data.sessionDurationMinutes || 0;
+  const mins = 100
   
   // XP formula: {0.9 - 1.1} * minutes
   const multiplier = 0.9 + Math.random() * 0.2;
@@ -115,5 +116,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ shouldBlock: isBlocked && data.inSession });
     });
     return true; 
+  }
+
+  // Allows the popup (or other clients) to request the background finalize
+  // a session that expired while the browser/extension was not active.
+  if (message.type === "FORCE_END_SESSION") {
+    endSessionSuccessfully()
+      .then(() => sendResponse({ success: true }))
+      .catch((err) => sendResponse({ success: false, error: err && err.message }));
+    return true; // indicate async response
   }
 });

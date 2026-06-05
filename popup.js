@@ -31,6 +31,7 @@ const RANKS = [
 ];
 
 let timerInterval = null;
+let forceEndRequested = false;
 
 document.addEventListener("DOMContentLoaded", () => {
   updateUI();
@@ -55,9 +56,11 @@ async function updateUI() {
     }
   }
 
+  const xpToNextRank = currentRank.max - points
+
   document.getElementById("rankName").innerText = currentRank.name;
   document.getElementById("rankIcon").src = currentRank.icon;
-  document.getElementById("pointsText").innerText = `${points} XP`;
+  document.getElementById("pointsText").innerText = `${points} XP - ${xpToNextRank} to next rank`;
 
   const range = currentRank.max - currentRank.min;
   const progressInRank = points - currentRank.min;
@@ -88,7 +91,17 @@ async function updateUI() {
     const timeLeft = data.sessionEndTime - now;
 
     if (timeLeft <= 0) {
+      // Session expired while the extension/browser was inactive.
+      // Ask the background to finalize the session so pendingXP is set.
       timerDisplay.innerText = "00:00";
+      if (!forceEndRequested) {
+        forceEndRequested = true;
+        chrome.runtime.sendMessage({ type: "FORCE_END_SESSION" }, (resp) => {
+          // Refresh UI after background processed the end
+          forceEndRequested = false;
+          updateUI();
+        });
+      }
     } else {
       const totalSeconds = Math.floor(timeLeft / 1000);
       const mins = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
