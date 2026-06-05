@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 300px;
+      font-family: Arial, sans-serif;
+      padding: 15px;
+      margin: 0;
+      box-sizing: border-box;
+    }
+    .profile { text-align: center; margin-bottom: 15px; }
+    .rank-icon { width: 64px; height: 64px; object-fit: contain; }
+    .rank-name { font-size: 1.2rem; font-weight: bold; margin: 5px 0; }
+    .points-text { font-size: 0.9rem; color: #666; }
+    
+    .exp-container {
+      background-color: #e0e0e0;
+      border-radius: 10px;
+      height: 15px;
+      width: 100%;
+      overflow: hidden;
+      margin: 10px 0 20px 0;
+    }
+    .exp-bar {
+      background-color: #4CAF50;
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .session-box {
+      border-top: 1px solid #eee;
+      padding-top: 15px;
+      text-align: center;
+    }
+    input[type="number"] {
+      width: 60px;
+      padding: 5px;
+      font-size: 1rem;
+      text-align: center;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .btn-start { background-color: #2196F3; color: white; }
+    .btn-stop { background-color: #f44336; color: white; }
+    .hidden { display: none; }
+    .timer-display { font-size: 1.5rem; font-weight: bold; margin: 10px 0; color: #333; }
+  </style>
+</head>
+<body>
+
+  <div class="profile">
+    <img id="rankIcon" class="rank-icon" src="icons/rank_unranked.png" alt="Rank Icon">
+    <div id="rankName" class="rank-name">Unranked</div>
+    <div id="pointsText" class="points-text">0 XP</div>
+    <div class="exp-container">
+      <div id="expBar" class="exp-bar"></div>
+    </div>
+  </div>
+
+  <div class="session-box">
+    <div id="setupMode">
+      <label for="durationInput">Lock-in Duration (mins): </label>
+      <input type="number" id="durationInput" min="1" max="1440" value="25">
+      <button id="startBtn" class="btn-start">Start Lock-In</button>
+    </div>
+
+    <div id="activeMode" class="hidden">
+      <div class="timer-display" id="timerDisplay">00:00</div>
+      <button id="stopBtn" class="btn-stop">Abandon Session (0 XP)</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
