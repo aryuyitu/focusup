@@ -52,6 +52,7 @@
     }
     .btn-start { background-color: #2196F3; color: white; }
     .btn-stop { background-color: #f44336; color: white; }
+    .btn-claim { background-color: #4CAF50; color: white; font-weight: bold; font-size: 1.1rem; }
     .hidden { display: none; }
     .timer-display { font-size: 1.5rem; font-weight: bold; margin: 10px 0; color: #333; }
   </style>
@@ -68,15 +69,22 @@
   </div>
 
   <div class="session-box">
-    <div id="setupMode">
+    <!-- Configuration UI -->
+    <div id="setupMode" class="hidden">
       <label for="durationInput">Lock-in Duration (mins): </label>
       <input type="number" id="durationInput" min="1" max="1440" value="25">
       <button id="startBtn" class="btn-start">Start Lock-In</button>
     </div>
 
+    <!-- Active Session UI -->
     <div id="activeMode" class="hidden">
       <div class="timer-display" id="timerDisplay">00:00</div>
       <button id="stopBtn" class="btn-stop">Abandon Session (0 XP)</button>
+    </div>
+
+    <!-- Reward Claim UI -->
+    <div id="claimMode" class="hidden">
+      <button id="claimBtn" class="btn-claim">Claim 0 XP!</button>
     </div>
   </div>
 
