@@ -14,6 +14,14 @@ async function loadConfigs() {
 
     const ranksResp = await fetch(chrome.runtime.getURL('config/ranks.json'));
     RANKS = await ranksResp.json();
+    // After loading ranks, ensure stored currentRank matches stored points
+    try {
+      const stored = await chrome.storage.local.get(['points']);
+      const currentPoints = stored.points || 0;
+      await updateStoredRank(currentPoints);
+    } catch (err) {
+      // non-fatal
+    }
   } catch (err) {
     console.error('Failed to load config files', err);
   }
@@ -34,6 +42,26 @@ function getPenaltyForPoints(points) {
   if (typeof rank.passivePenalty === 'number') return rank.passivePenalty;
   if (typeof rank.penalty === 'number') return rank.penalty; // legacy support
   return DEFAULT_PASSIVE_PENALTY;
+}
+
+function computeRankForPoints(points) {
+  const p = (typeof points === 'number') ? points : (Number(points) || 0);
+  if (!Array.isArray(RANKS) || RANKS.length === 0) return null;
+  return RANKS.find(r => typeof r.min === 'number' && typeof r.max === 'number' && p >= r.min && p <= r.max) || null;
+}
+
+async function updateStoredRank(points) {
+  const rank = computeRankForPoints(points);
+  if (!rank) return;
+  try {
+    const current = await chrome.storage.local.get(['currentRank']);
+    const stored = current.currentRank;
+    if (!stored || stored.name !== rank.name) {
+      await chrome.storage.local.set({ currentRank: rank });
+    }
+  } catch (err) {
+    // ignore storage errors
+  }
 }
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -98,6 +126,7 @@ async function handlePassiveTracking() {
     let newPoints = currentPoints - penalty;
     if (newPoints < 0) newPoints = 0;
     await chrome.storage.local.set({ points: newPoints });
+    try { await updateStoredRank(newPoints); } catch (e) { /* ignore */ }
   }
 }
 

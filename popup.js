@@ -31,13 +31,19 @@ async function updateUI() {
   const points = Math.floor(data.points || 0);
   const pendingXP = data.pendingXP || 0;
 
-  // 1. Handle Ranking Engine
-  let currentRank = (RANKS && RANKS.length > 0) ? RANKS[0] : { name: 'Unranked', min: 0, max: 100, icon: 'icons/rank_unranked.png' };
-  for (const rank of RANKS) {
-    if (points >= rank.min && points <= rank.max) {
-      currentRank = rank;
-      break;
+  // 1. Handle Ranking Engine — prefer stored `currentRank`, fallback to computing from RANKS
+  const storage = await chrome.storage.local.get(['currentRank']);
+  let currentRank = storage.currentRank;
+  if (!currentRank) {
+    currentRank = (RANKS && RANKS.length > 0) ? RANKS[0] : { name: 'Iron 1', min: 0, max: 100, icon: 'icons/ranks/iron-1.png' };
+    for (const rank of RANKS) {
+      if (points >= rank.min && points <= rank.max) {
+        currentRank = rank;
+        break;
+      }
     }
+    // persist computed rank for subsequent opens
+    try { chrome.storage.local.set({ currentRank }); } catch (e) { /* ignore */ }
   }
 
   const xpToNextRank = currentRank.max - points
@@ -134,10 +140,19 @@ async function claimPoints() {
   const newPoints = (data.points || 0) + (data.pendingXP || 0);
 
   // Commit points to ledger and wipe pending
-  await chrome.storage.local.set({
-    points: newPoints,
-    pendingXP: 0
-  });
+  await chrome.storage.local.set({ points: newPoints, pendingXP: 0 });
+
+  // Update stored rank after claiming
+  if (RANKS && RANKS.length > 0) {
+    let computedRank = RANKS[0];
+    for (const rank of RANKS) {
+      if (newPoints >= rank.min && newPoints <= rank.max) {
+        computedRank = rank;
+        break;
+      }
+    }
+    try { await chrome.storage.local.set({ currentRank: computedRank }); } catch (e) { /* ignore */ }
+  }
 
   updateUI();
 }
