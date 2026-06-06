@@ -5,6 +5,8 @@
 let BLOCKED_URLS = [];
 let RANKS = [];
 
+const DEFAULT_PASSIVE_PENALTY = 0.333; // fallback per-10s penalty
+
 async function loadConfigs() {
   try {
     const blockedResp = await fetch(chrome.runtime.getURL('config/blocked_urls.json'));
@@ -19,6 +21,20 @@ async function loadConfigs() {
 
 // Load configs on startup (service worker may initialize on demand)
 loadConfigs();
+
+function getPenaltyForPoints(points) {
+  const p = (typeof points === 'number') ? points : (Number(points) || 0);
+  if (!Array.isArray(RANKS) || RANKS.length === 0) return DEFAULT_PASSIVE_PENALTY;
+
+  const rank = RANKS.find(r =>
+    typeof r.min === 'number' && typeof r.max === 'number' && p >= r.min && p <= r.max
+  );
+
+  if (!rank) return DEFAULT_PASSIVE_PENALTY;
+  if (typeof rank.passivePenalty === 'number') return rank.passivePenalty;
+  if (typeof rank.penalty === 'number') return rank.penalty; // legacy support
+  return DEFAULT_PASSIVE_PENALTY;
+}
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.get(['points','inSession','pendingXP'], (res) => {
@@ -77,7 +93,9 @@ async function handlePassiveTracking() {
 
   const isBlocked = BLOCKED_URLS.some(url => currentUrl.includes(url));
   if (isBlocked) {
-    let newPoints = (data.points || 0) - 0.333;
+    const currentPoints = (typeof data.points === 'number') ? data.points : (Number(data.points) || 0);
+    const penalty = getPenaltyForPoints(currentPoints);
+    let newPoints = currentPoints - penalty;
     if (newPoints < 0) newPoints = 0;
     await chrome.storage.local.set({ points: newPoints });
   }
