@@ -20,14 +20,13 @@ async function loadConfigs() {
 // Load configs on startup (service worker may initialize on demand)
 loadConfigs();
 
-// Initialize global state
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.set({
-    points: 0,
-    inSession: false,
-    sessionEndTime: null,
-    sessionDurationMinutes: 0,
-    pendingXP: 0 // New state tracking for unclaimed XP
+  chrome.storage.local.get(['points','inSession','pendingXP'], (res) => {
+    const defaults = {};
+    if (typeof res.points === 'undefined') defaults.points = 0;
+    if (typeof res.inSession === 'undefined') defaults.inSession = false;
+    if (typeof res.pendingXP === 'undefined') defaults.pendingXP = 0;
+    if (Object.keys(defaults).length) chrome.storage.local.set(defaults);
   });
 });
 
