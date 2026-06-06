@@ -4,8 +4,10 @@
 function checkAndBlock() {
   chrome.runtime.sendMessage({ type: "CHECK_URL", url: window.location.href }, (response) => {
     if (response && response.shouldBlock) {
-      // Redirect page to the local extension block screen
-      window.location.href = chrome.runtime.getURL("blocked.html");
+      // Ask the background script to navigate this tab to the extension's block screen.
+      // Doing the navigation from the background avoids chrome-extension://invalid/ issues
+      // that can occur when content scripts attempt to navigate directly to extension pages.
+      chrome.runtime.sendMessage({ type: "NAVIGATE_TO_BLOCKED" });
     }
   });
 }

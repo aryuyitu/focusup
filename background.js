@@ -102,6 +102,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; 
   }
 
+  if (message.type === "NAVIGATE_TO_BLOCKED") {
+    // Navigate the sender tab to the extension's blocked page. Do this from the
+    // background because navigating directly from content scripts can yield
+    // chrome-extension://invalid/ in some contexts.
+    try {
+      if (sender && sender.tab && typeof sender.tab.id !== 'undefined') {
+        chrome.tabs.update(sender.tab.id, { url: chrome.runtime.getURL('blocked.html') });
+      }
+    } catch (err) {
+      console.error('Failed to navigate to blocked page', err);
+    }
+    return; // no async response
+  }
+
   // Allows the popup (or other clients) to request the background finalize
   // a session that expired while the browser/extension was not active.
   if (message.type === "FORCE_END_SESSION") {
