@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>FocusUp Settings</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 18px; max-width: 420px; }
+    h1 { font-size: 1.1rem; margin: 0 0 12px 0; }
+    #list { margin: 12px 0; }
+    .item { display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee; }
+    .item span { word-break:break-all; }
+    .btn { padding:6px 8px; border-radius:4px; border:1px solid #ccc; background:#fff; cursor:pointer; }
+    .remove { color:#f44336; border-color: #f44336; }
+    .addRow { display:flex; gap:8px; margin-top:8px; }
+    input[type="text"] { flex:1; padding:6px; }
+    .close { margin-top:14px; }
+  </style>
+</head>
+<body>
+  <h1>Blocked Sites</h1>
+  <div>
+    <div id="list">Loading…</div>
+
+    <div class="addRow">
+      <input id="newUrl" type="text" placeholder="e.g. example.com or youtube.com" />
+      <button id="addBtn" class="btn">Add</button>
+    </div>
+
+    <button id="resetBtn" class="btn" style="margin-top:8px;">Reset to defaults</button>
+    <button id="closeBtn" class="btn close">Close</button>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>

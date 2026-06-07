@@ -30,6 +30,22 @@ async function loadConfigs() {
 // Load configs on startup (service worker may initialize on demand)
 loadConfigs();
 
+// Utility to prefer user-configured blocked URLs from storage, falling back to bundled list
+async function getBlockedUrls() {
+  try {
+    const stored = await chrome.storage.local.get(['blockedUrls']);
+    if (stored && Array.isArray(stored.blockedUrls) && stored.blockedUrls.length > 0) {
+      return stored.blockedUrls;
+    }
+  } catch (e) {
+    // ignore
+  }
+  if (!BLOCKED_URLS || BLOCKED_URLS.length === 0) {
+    await loadConfigs();
+  }
+  return BLOCKED_URLS || [];
+}
+
 function getPenaltyForPoints(points) {
   const p = (typeof points === 'number') ? points : (Number(points) || 0);
   if (!Array.isArray(RANKS) || RANKS.length === 0) return DEFAULT_PASSIVE_PENALTY;
@@ -107,9 +123,6 @@ async function endSessionSuccessfully() {
 }
 
 async function handlePassiveTracking() {
-  if (!BLOCKED_URLS || BLOCKED_URLS.length === 0) {
-    await loadConfigs();
-  }
   const data = await chrome.storage.local.get(["inSession", "points"]);
   if (data.inSession) return; 
 
@@ -119,7 +132,8 @@ async function handlePassiveTracking() {
   const currentUrl = tabs[0].url;
   if (!currentUrl) return;
 
-  const isBlocked = BLOCKED_URLS.some(url => currentUrl.includes(url));
+  const blocked = await getBlockedUrls();
+  const isBlocked = blocked.some(url => currentUrl.includes(url));
   if (isBlocked) {
     const currentPoints = (typeof data.points === 'number') ? data.points : (Number(data.points) || 0);
     const penalty = getPenaltyForPoints(currentPoints);
@@ -133,20 +147,39 @@ async function handlePassiveTracking() {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "CHECK_URL") {
     const url = message.url;
+    (async () => {
+      try {
+        const blocked = await getBlockedUrls();
+        const isBlocked = (blocked || []).some(bUrl => url.includes(bUrl));
+        chrome.storage.local.get(["inSession"], (data) => {
+          sendResponse({ shouldBlock: isBlocked && data.inSession });
+        });
+      } catch (e) {
+        chrome.storage.local.get(["inSession"], (data) => {
+          sendResponse({ shouldBlock: false && data.inSession });
+        });
+      }
+    })();
+    return true;
+  }
 
-    const respond = () => {
-      const isBlocked = (BLOCKED_URLS || []).some(bUrl => url.includes(bUrl));
-      chrome.storage.local.get(["inSession"], (data) => {
-        sendResponse({ shouldBlock: isBlocked && data.inSession });
+  // Close settings page if session started elsewhere
+  if (message.type === 'SESSION_STARTED') {
+    try {
+      const settingsUrl = chrome.runtime.getURL('settings.html');
+      chrome.tabs.query({}, (tabs) => {
+        for (const t of tabs) {
+          try {
+            if (t && t.url && (t.url === settingsUrl || t.url.startsWith(settingsUrl))) {
+              chrome.tabs.remove(t.id);
+            }
+          } catch (e) { /* ignore per-tab errors */ }
+        }
       });
-    };
-
-    if (!BLOCKED_URLS || BLOCKED_URLS.length === 0) {
-      loadConfigs().then(respond).catch(() => respond());
-    } else {
-      respond();
+    } catch (e) {
+      // ignore
     }
-    return true; 
+    return; // no response needed
   }
 
   if (message.type === "NAVIGATE_TO_BLOCKED") {

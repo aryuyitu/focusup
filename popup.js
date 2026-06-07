@@ -24,6 +24,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("startBtn").addEventListener("click", startSession);
   document.getElementById("stopBtn").addEventListener("click", stopSessionManually);
   document.getElementById("claimBtn").addEventListener("click", claimPoints);
+  const cog = document.getElementById('settingsCog');
+  if (cog) {
+    cog.addEventListener('click', () => {
+      window.open(chrome.runtime.getURL('settings.html'));
+    });
+  }
 });
 
 async function updateUI() {
@@ -105,6 +111,16 @@ async function updateUI() {
     activeMode.classList.add("hidden");
     claimMode.classList.add("hidden");
   }
+
+  // Show settings cog only when in setupMode (no pending XP and not active session)
+  const cog = document.getElementById('settingsCog');
+  if (cog) {
+    if (!setupMode.classList.contains('hidden')) {
+      cog.classList.remove('hidden');
+    } else {
+      cog.classList.add('hidden');
+    }
+  }
 }
 
 function startSession() {
@@ -120,6 +136,8 @@ function startSession() {
     sessionDurationMinutes: minutes
   }, () => {
     chrome.alarms.create("lockInAlarm", { delayInMinutes: minutes });
+    // Notify background so it can close any open settings pages.
+    try { chrome.runtime.sendMessage({ type: 'SESSION_STARTED' }); } catch (e) { /* ignore */ }
     updateUI();
   });
 }

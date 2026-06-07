@@ -9,6 +9,7 @@
       padding: 15px;
       margin: 0;
       box-sizing: border-box;
+      position: relative;
     }
     .profile { text-align: center; margin-bottom: 15px; }
     .rank-icon { width: 64px; height: 64px; object-fit: contain; }
@@ -67,6 +68,23 @@
       <div id="expBar" class="exp-bar"></div>
     </div>
   </div>
+
+  <button id="settingsCog" class="hidden" title="Settings" aria-label="Settings">⚙️</button>
+
+  <style>
+    #settingsCog {
+      position: absolute;
+      top: 1px;
+      right: 8px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      z-index: 1000;
+      padding: 4px;
+      width: auto;
+    }
+  </style>
 
   <div class="session-box">
     <!-- Configuration UI -->
