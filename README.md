@@ -13,6 +13,6 @@ I made this tool for myself because I have an addiction to doom scrolling reels,
 8. Enable it
 9. Open up the extension and start your first lock in session
 
-# Blocking more website:
+# Blocking more websites:
 1. Click the settings icon in the popup
 2. Add and remove urls as you please
