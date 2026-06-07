@@ -125,7 +125,7 @@ async function updateUI() {
 
 function startSession() {
   const durationInput = document.getElementById("durationInput").value;
-  const minutes = parseInt(durationInput, 10) || 25;
+  const minutes = parseInt(durationInput, 10) || 60;
 
   const msToLock = minutes * 60 * 1000;
   const sessionEndTime = Date.now() + msToLock;
