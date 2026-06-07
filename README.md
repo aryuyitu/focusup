@@ -14,6 +14,5 @@ I made this tool for myself because I have an addiction to doom scrolling reels,
 9. Open up the extension and start your first lock in session
 
 # Blocking more website:
-1. Once the repo is cloned:
-2. Go into /config
-3. Add/Remove websites in blocked_urls.json
+1. Click the settings icon in the popup
+2. Add and remove urls as you please
