@@ -15,6 +15,9 @@ async function loadRanks() {
 
 let timerInterval = null;
 let forceEndRequested = false;
+// Allowed lock-in bounds (used by UI clamping and startSession)
+const MIN_MINUTES = 1;
+const MAX_MINUTES = 120;
 
 document.addEventListener("DOMContentLoaded", async () => {
   await loadRanks();
@@ -24,6 +27,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("startBtn").addEventListener("click", startSession);
   document.getElementById("stopBtn").addEventListener("click", stopSessionManually);
   document.getElementById("claimBtn").addEventListener("click", claimPoints);
+  // Clamp typed durations to allowed range when the user leaves the input
+  const durationInputEl = document.getElementById("durationInput");
+  if (durationInputEl) {
+    function clampDurationInput() {
+      const raw = parseInt(durationInputEl.value, 10);
+      let v = Number.isFinite(raw) ? raw : 60;
+      if (v < MIN_MINUTES) v = MIN_MINUTES;
+      if (v > MAX_MINUTES) v = MAX_MINUTES;
+      if (durationInputEl.value !== String(v)) durationInputEl.value = v;
+    }
+    durationInputEl.addEventListener('blur', clampDurationInput);
+    durationInputEl.addEventListener('change', clampDurationInput);
+  }
   const cog = document.getElementById('settingsCog');
   if (cog) {
     cog.addEventListener('click', () => {
@@ -124,8 +140,16 @@ async function updateUI() {
 }
 
 function startSession() {
-  const durationInput = document.getElementById("durationInput").value;
-  const minutes = parseInt(durationInput, 10) || 60;
+  const durationInputEl = document.getElementById("durationInput");
+  const raw = parseInt(durationInputEl.value, 10);
+  let minutes = Number.isFinite(raw) ? raw : 60;
+
+  // Clamp to allowed range
+  if (minutes < MIN_MINUTES) minutes = MIN_MINUTES;
+  if (minutes > MAX_MINUTES) minutes = MAX_MINUTES;
+
+  // Reflect clamped value back to the input so the UI stays consistent
+  durationInputEl.value = minutes;
 
   const msToLock = minutes * 60 * 1000;
   const sessionEndTime = Date.now() + msToLock;
